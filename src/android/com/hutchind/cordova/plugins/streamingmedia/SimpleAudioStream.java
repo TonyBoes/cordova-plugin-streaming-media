@@ -13,6 +13,8 @@ import android.view.MotionEvent;
 import android.widget.ImageView;
 import android.view.View;
 import android.view.Window;
+import android.view.GestureDetector;
+import android.support.v4.view.GestureDetectorCompat;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.MediaController;
@@ -29,6 +31,7 @@ MediaController.MediaPlayerControl {
 	private View mMediaControllerView;
 	private String mAudioUrl;
 	private Boolean mShouldAutoClose = true;
+	private GestureDetectorCompat mDetector;
 
 	@Override
 	public void onCreate(Bundle icicle) {
@@ -36,6 +39,7 @@ MediaController.MediaPlayerControl {
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		Bundle b = getIntent().getExtras();
 		mAudioUrl = b.getString("mediaUrl");
+		mDetector = new GestureDetectorCompat(this, new MyGestureListener());
 		String backgroundColor = b.getString("bgColor");
 		String backgroundImagePath = b.getString("bgImage");
 		String backgroundImageScale = b.getString("bgImageScale");
@@ -122,7 +126,7 @@ MediaController.MediaPlayerControl {
 		mMediaController.setAnchorView(mMediaControllerView);
 		mMediaPlayer.start();
 		mMediaController.setEnabled(true);
-		mMediaController.show();
+		mMediaController.show(0);
 	}
 
 	@Override
@@ -272,9 +276,23 @@ MediaController.MediaPlayerControl {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-	if (mMediaController != null) {
-		mMediaController.show();
+		if (this.mDetector.onTouchEvent(event)) {
+			return true;
+		} else {
+			return super.onTouchEvent(event);
+		}
 	}
-	return false;
+
+	class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+		private static final String DEBUG_TAG = "Gestures";
+		
+		@Override
+		public boolean onSingleTapConfirmed(MotionEvent event) {
+			Log.d(DEBUG_TAG, "onSingleTapConfirmed: " + event.toString());
+			if (mMediaController != null) {
+				mMediaController.show(0);
+			}
+			return true;
+		}
 	}
 }

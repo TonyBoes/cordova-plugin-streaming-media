@@ -16,6 +16,8 @@ import android.view.Display;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.GestureDetector;
+import android.support.v4.view.GestureDetectorCompat;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -32,6 +34,7 @@ MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
 	private String mVideoUrl;
 	private Boolean mShouldAutoClose = true;
 	private boolean mControls;
+	private GestureDetectorCompat mDetector;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +46,7 @@ MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
 		mVideoUrl = b.getString("mediaUrl");
 		mShouldAutoClose = b.getBoolean("shouldAutoClose", true);
 		mControls = b.getBoolean("controls", true);
+		mDetector = new GestureDetectorCompat(this, new MyGestureListener());
 
 		RelativeLayout relLayout = new RelativeLayout(this);
 		relLayout.setBackgroundColor(Color.BLACK);
@@ -187,12 +191,6 @@ MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
 	}
 
 	@Override
-	public void onBackPressed() {
-		// If we're leaving, let's finish the activity
-		wrapItUp(RESULT_OK, null);
-	}
-
-	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		// The screen size changed or the orientation changed... don't restart the activity
 		super.onConfigurationChanged(newConfig);
@@ -200,8 +198,29 @@ MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		if (mMediaController != null)
-			mMediaController.show();
-		return false;
+		if (this.mDetector.onTouchEvent(event)) {
+			return true;
+		} else {
+			return super.onTouchEvent(event);
+		}
+	}
+
+	@Override
+	public void onBackPressed() {
+		// If we're leaving, let's finish the activity
+		wrapItUp(RESULT_OK, null);
+	}
+
+	class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+		private static final String DEBUG_TAG = "Gestures";
+		
+		@Override
+		public boolean onSingleTapConfirmed(MotionEvent event) {
+			Log.d(DEBUG_TAG, "onSingleTapConfirmed: " + event.toString());
+			if (mMediaController != null) {
+				mMediaController.show();
+			}
+			return true;
+		}
 	}
 }
